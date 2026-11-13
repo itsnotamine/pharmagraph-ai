@@ -4,5 +4,84 @@
 <header class="header"><div class="company"><img src="/static/syntax-logo.jpeg" alt="Syntax logo"><span class="divider"></span><span class="workspace-label">RESEARCH INTELLIGENCE</span></div><div class="header-center"><span class="pulse"></span> PharmaGraph AI <span class="edition">/ Agent Workspace</span></div><div class="header-right"><span class="header-chip">◆ HYBRID RAG</span><button id="toggle-right" class="icon-button" title="Toggle evidence panel" aria-label="Toggle evidence panel">☷</button></div></header>
 <div class="layout"><aside class="sidebar" id="sidebar"><button class="new-chat" id="new-chat"><span>＋</span> New research session</button><div class="section-label">WORKSPACE</div><button class="nav-item active" id="nav-chat">◫ <span>Research assistant</span></button><div class="section-label history-label">RECENT CONVERSATIONS</div><nav id="history" class="history" aria-label="Chat history"></nav><div class="sidebar-foot"><div class="sidebar-foot-icon">✦</div><div><strong>PharmaGraph AI</strong><small>Built for the Syntax GenAI case</small></div></div></aside>
 <main class="center"><div class="conversation-head"><div><span class="eyebrow">CLINICAL KNOWLEDGE WORKSPACE</span><h1 id="conversation-title">Research Assistant</h1><p>Evidence first. Reasoned answers. Transparent decisions.</p></div><span class="online"><span class="pulse"></span> Agent ready</span></div><div class="chat-scroll" id="chat-scroll"><div id="messages" class="messages"></div></div><div class="composer-area"><form id="composer" class="composer"><textarea id="question" rows="1" maxlength="2000" placeholder="Ask about medications, contraindications, interactions…" aria-label="Research question"></textarea><button id="send" type="submit" title="Send question" aria-label="Send question">➤</button></form><div class="composer-note">Enter to send · Shift+Enter for a new line <span>Research demonstration only — not medical advice</span></div></div></main>
-<aside class="insights" id="insights"><div class="insights-title"><div><span class="eyebrow">RESEARCH TRANSPARENCY</span><h2>Evidence Center</h2></div><span class="insights-icon">⌁</span></div><div class="insight-metrics"><div><strong id="source-count">—</strong><span>Sources</span></div><div><strong id="tool-count">—</strong><span>Tools</span></div><div><strong id="review-count">—</strong><span>Retries</span></div></div><div class="insight-section"><div class="insight-section-title">QUALITY REVIEW <span id="critic-status" class="badge neutral">Awaiting research</span></div><p id="critic-feedback" class="muted">Run a research question to see the agent's review.</p></div><div class="insight-section"><div class="insight-section-title">AGENT WORKFLOW</div><div id="workflow" class="workflow"><div class="workflow-empty">01 Plan → 02 Retrieve → 03 Tools → 04 Review → 05 Answer</div></div></div><div class="insight-section evidence-section"><div class="insight-section-title">CITED EVIDENCE <span id="evidence-label">0 documents</span></div><div id="evidence" class="evidence"><p class="muted">Evidence linked to the selected answer will appear here.</p></div></div><div class="insights-bottom">◎ Sources are retrieved from the local pharmaceutical corpus.</div></aside></div></div>
+
+<aside class="insights" id="insights">
+
+  <div class="insights-title">
+    <div>
+      <span class="eyebrow">RESEARCH TRANSPARENCY</span>
+      <h2>Evidence Center</h2>
+    </div>
+    <span class="insights-icon">⌁</span>
+  </div>
+
+  <div class="insight-metrics" role="tablist" aria-label="Evidence details">
+
+    <button type="button" class="metric-card active"
+            id="tab-sources" data-panel="sources"
+            role="tab" aria-selected="true"
+            aria-controls="detail-panel">
+      <strong id="source-count">—</strong>
+      <span>Sources</span>
+    </button>
+
+    <button type="button" class="metric-card"
+            id="tab-tools" data-panel="tools"
+            role="tab" aria-selected="false"
+            aria-controls="detail-panel">
+      <strong id="tool-count">—</strong>
+      <span>Tools</span>
+    </button>
+
+    <button type="button" class="metric-card"
+            id="tab-retries" data-panel="retries"
+            role="tab" aria-selected="false"
+            aria-controls="detail-panel">
+      <strong id="review-count">—</strong>
+      <span>Retries</span>
+    </button>
+
+  </div>
+
+  <div class="insight-section">
+    <div class="insight-section-title">
+      QUALITY REVIEW
+      <span id="critic-status" class="badge neutral">
+        Awaiting research
+      </span>
+    </div>
+
+    <p id="critic-feedback" class="muted">
+      Run a research question to see the agent's review.
+    </p>
+  </div>
+
+  <div class="insight-section interactive-details">
+
+    <div class="insight-section-title">
+      <span id="detail-title">CITED EVIDENCE</span>
+      <span id="evidence-label">0 excerpts</span>
+    </div>
+
+    <div id="detail-panel"
+         class="detail-panel"
+         role="tabpanel"
+         aria-labelledby="tab-sources">
+
+      <div id="evidence" class="evidence">
+        <p class="muted">
+          Evidence linked to the selected answer will appear here.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="insights-bottom">
+    ◎ Research based on the local pharmaceutical corpus.
+  </div>
+
+</aside>
+</div></div>
 </body></html>

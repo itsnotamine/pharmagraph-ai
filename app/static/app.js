@@ -11,7 +11,182 @@ const KEY='pharmagraph_syntax_v2';let chats=readChats(),active=chats[0]?.id||nul
     );
 
     return DOMPurify.sanitize(marked.parse(withLinks));
-}function welcome(){const w=el('div','welcome');const icon=el('div','welcome-icon');const img=el('img');img.src='/static/syntax-symbol.jpeg';img.alt='Syntax';icon.append(img);w.append(icon,el('h2','', 'What would you like to research?'),el('p','', 'Ask questions about drug safety, interactions and prescribing information. Every answer is grounded in the local pharmaceutical evidence corpus.'));const grid=el('div','suggestions');const examples=[['Contraindications','What are the main contraindications for warfarin?'],['Drug comparison','Compare the contraindications of warfarin and apixaban.'],['Drug interactions','What is the bleeding risk when combining warfarin and sertraline?'],['Renal safety','Is metformin contraindicated at an eGFR of 25?']];for(const [title,question] of examples){const b=el('button','suggestion');b.append(el('strong','',title),document.createTextNode(question));b.addEventListener('click',()=>{q.value=question;send()});grid.append(b)}w.append(grid);$('messages').append(w)}function message(m){const a=el('article','message '+m.role),avatar=el('div','avatar',m.role==='user'?'●':'✦'),body=el('div','message-body'),name=el('div','message-name',m.role==='user'?'You':'PharmaGraph AI'),content=el('div','message-content');if(m.role==='assistant'){const html=md(m.text);if(html===null)content.textContent=m.text;else content.innerHTML=html}else content.textContent=m.text;body.append(name,content);if(m.role==='assistant'&&m.trace){const meta=el('div','message-meta','✓ Evidence-backed research · View agent details in Evidence Center');body.append(meta)}a.append(avatar,body);$('messages').append(a)}function traceField(t,...names){for(const n of names)if(t&&t[n]!==undefined)return t[n];return undefined}function evidencePanel(){const c=current(),m=[...(c?.messages||[])].reverse().find(x=>x.role==='assistant'&&x.trace);const t=m?.trace||{},sources=m?.sources||[];const tools=traceField(t,'tools_executed','toolsExecuted')||[],retries=traceField(t,'retries','retry_count')??0,approved=traceField(t,'critic_approved','approved'),feedback=traceField(t,'critic_feedback','feedback');$('source-count').textContent=m?sources.length:'—';$('tool-count').textContent=m?tools.length:'—';$('review-count').textContent=m?retries:'—';const badge=$('critic-status');badge.className='badge '+(!m?'neutral':approved===true?'good':approved===false?'bad':'neutral');badge.textContent=!m?'Awaiting research':approved===true?'✓ Approved':approved===false?'Review not approved':'Review unavailable';$('critic-feedback').textContent=feedback||'Run a research question to see the agent’s review.';const workflow=$('workflow');workflow.replaceChildren();if(!m){workflow.append(el('div','workflow-empty','01 Plan → 02 Retrieve → 03 Tools → 04 Review → 05 Answer'))}else{const plan=traceField(t,'plan')||[],steps=[['Plan',Array.isArray(plan)?plan.length+' research steps':'Research plan'],['Retrieve','Hybrid semantic + lexical search'],['Tools',tools.length?tools.join(', '):'Evidence tools'],['Review',approved===true?'Critic approved':approved===false?'Critic flagged answer':'Review result unavailable'],['Answer','Citations and disclaimer']];steps.forEach(([title,detail],i)=>{const row=el('div','step'),num=el('span','number',String(i+1).padStart(2,'0')),info=el('div');info.append(el('strong','',title),el('small','',detail));row.append(num,info);workflow.append(row)})}$('evidence-label').textContent=sources.length+' excerpts';const root=$('evidence');root.replaceChildren();if(!sources.length){root.append(el('p','muted','Evidence linked to the selected answer will appear here.'));return}for(const s of sources){const card=el('div','source-card');card.id='evidence-'+String(s.id||'');card.append(el('strong','',`[${s.id??'?'}] ${s.source||'Unknown source'}`),el('small','',s.section||''));const details=el('details'),summary=el('summary','', 'View supporting excerpt'),quote=el('blockquote','',s.excerpt||'');details.append(summary,quote);card.append(details);root.append(card)}}function render(){renderHistory();const c=current();$('conversation-title').textContent=c&&c.messages.length?c.title:'Research Assistant';$('messages').replaceChildren();if(!c||!c.messages.length)welcome();else c.messages.forEach(message);evidencePanel();$('chat-scroll').scrollTop=$('chat-scroll').scrollHeight}async function send(){if(busy)return;const question=q.value.trim();if(!question)return;if(!current())create();const c=current(),id=c.id;c.messages.push({role:'user',text:question});if(c.title==='New research session')c.title=question.slice(0,54);q.value='';busy=true;$('send').disabled=true;save();render();const loader=el('div','loading','✦ PharmaGraph AI is planning, retrieving evidence and reviewing the answer…');$('messages').append(loader);$('chat-scroll').scrollTop=$('chat-scroll').scrollHeight;try{const response=await fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question})});const data=await response.json();if(!response.ok)throw Error(typeof data.detail==='string'?data.detail:'Request failed');const target=chats.find(c=>c.id===id);target?.messages.push({role:'assistant',text:data.answer||'No answer was returned.',sources:data.sources||[],trace:data.agent_trace||data.trace||null})}catch(e){const target=chats.find(c=>c.id===id);target?.messages.push({role:'assistant',text:'The research request could not be completed: '+e.message,sources:[],trace:null})}finally{busy=false;$('send').disabled=false;save();render();q.focus()}}$('composer').addEventListener('submit',e=>{e.preventDefault();send()});q.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});q.addEventListener('input',()=>{q.style.height='27px';q.style.height=Math.min(q.scrollHeight,130)+'px'});$('new-chat').addEventListener('click',create);$('toggle-right').addEventListener('click',()=>{$('insights').classList.toggle('visible')});if(!active)create();else render();
+}function welcome(){const w=el('div','welcome');const icon=el('div','welcome-icon');const img=el('img');img.src='/static/syntax-symbol.jpeg';img.alt='Syntax';icon.append(img);w.append(icon,el('h2','', 'What would you like to research?'),el('p','', 'Ask questions about drug safety, interactions and prescribing information. Every answer is grounded in the local pharmaceutical evidence corpus.'));const grid=el('div','suggestions');const examples=[['Contraindications','What are the main contraindications for warfarin?'],['Drug comparison','Compare the contraindications of warfarin and apixaban.'],['Drug interactions','What is the bleeding risk when combining warfarin and sertraline?'],['Renal safety','Is metformin contraindicated at an eGFR of 25?']];for(const [title,question] of examples){const b=el('button','suggestion');b.append(el('strong','',title),document.createTextNode(question));b.addEventListener('click',()=>{q.value=question;send()});grid.append(b)}w.append(grid);$('messages').append(w)}function message(m){const a=el('article','message '+m.role),avatar=el('div','avatar',m.role==='user'?'●':'✦'),body=el('div','message-body'),name=el('div','message-name',m.role==='user'?'You':'PharmaGraph AI'),content=el('div','message-content');if(m.role==='assistant'){const html=md(m.text);if(html===null)content.textContent=m.text;else content.innerHTML=html}else content.textContent=m.text;body.append(name,content);if(m.role==='assistant'&&m.trace){const meta=el('div','message-meta','✓ Evidence-backed research · View agent details in Evidence Center');body.append(meta)}a.append(avatar,body);$('messages').append(a)}function traceField(t,...names){for(const n of names)if(t&&t[n]!==undefined)return t[n];return undefined}
+let activeEvidenceTab = 'sources';
+
+function selectEvidenceTab(tab) {
+    activeEvidenceTab = tab;
+
+    document.querySelectorAll('.metric-card').forEach(button => {
+        const selected = button.dataset.panel === tab;
+        button.classList.toggle('active', selected);
+        button.setAttribute('aria-selected', String(selected));
+    });
+
+    const panel = $('detail-panel');
+    const selectedButton = $('tab-' + tab);
+    if (selectedButton) {
+        panel.setAttribute('aria-labelledby', selectedButton.id);
+    }
+
+    renderEvidenceDetails();
+}
+
+function latestResearch() {
+    const c = current();
+    return [...(c?.messages || [])]
+        .reverse()
+        .find(m => m.role === 'assistant' && m.trace);
+}
+
+function renderEvidenceDetails() {
+    const m = latestResearch();
+    const t = m?.trace || {};
+    const sources = m?.sources || [];
+    const tools = traceField(t, 'tools_executed', 'toolsExecuted') || [];
+    const retries = traceField(t, 'retries', 'retry_count') ?? 0;
+    const approved = traceField(t, 'critic_approved', 'approved');
+    const feedback = traceField(t, 'critic_feedback', 'feedback');
+
+    const root = $('detail-panel');
+    root.replaceChildren();
+
+    const titles = {
+        sources: 'CITED EVIDENCE',
+        tools: 'EXECUTED TOOLS',
+        retries: 'ADAPTIVE CRITIC'
+    };
+
+    $('detail-title').textContent = titles[activeEvidenceTab];
+
+    if (activeEvidenceTab === 'sources') {
+        $('evidence-label').textContent = sources.length + ' excerpts';
+
+        const evidence = el('div', 'evidence');
+        evidence.id = 'evidence';
+
+        if (!sources.length) {
+            evidence.append(
+                el('p', 'muted', 'No evidence available for this answer.')
+            );
+        }
+
+        for (const s of sources) {
+            const card = el('div', 'source-card');
+            card.id = 'evidence-' + String(s.id || '');
+
+            card.append(
+                el('strong', '', `[${s.id ?? '?'}] ${s.source || 'Unknown source'}`),
+                el('small', '', s.section || '')
+            );
+
+            const details = el('details');
+            const summary = el('summary', '', 'View supporting excerpt');
+            const quote = el('blockquote', '', s.excerpt || '');
+
+            details.append(summary, quote);
+            card.append(details);
+            evidence.append(card);
+        }
+
+        root.append(evidence);
+    }
+
+    if (activeEvidenceTab === 'tools') {
+        $('evidence-label').textContent = tools.length + ' tools';
+
+        if (!tools.length) {
+            root.append(el('p', 'muted', 'No tools executed yet.'));
+            return;
+        }
+
+        const descriptions = {
+            contraindication_lookup:
+                'Identifies formal contraindications from prescribing information.',
+            renal_safety_check:
+                'Checks renal impairment restrictions and eGFR thresholds.',
+            interaction_analysis:
+                'Investigates medication interactions and associated risks.',
+            evidence_comparison:
+                'Compares evidence across pharmaceutical documents.'
+        };
+
+        for (const tool of tools) {
+            const card = el('div', 'tool-card');
+
+            card.append(
+                el('strong', '', '✓ ' + tool),
+                el('p', 'muted',
+                    descriptions[tool] || 'Specialized research tool.')
+            );
+
+            root.append(card);
+        }
+    }
+
+    if (activeEvidenceTab === 'retries') {
+        $('evidence-label').textContent = retries + ' retries';
+
+        const card = el('div', 'review-detail-card');
+
+        card.append(
+            el('strong', '', 'Review status'),
+            el(
+                'p',
+                approved === true ? 'review-success' : 'review-warning',
+                !m
+                    ? 'Awaiting research'
+                    : approved === true
+                        ? '✓ Approved'
+                        : 'Review not approved'
+            ),
+            el('strong', '', 'Revision attempts'),
+            el('p', 'muted', String(retries)),
+            el('strong', '', 'Critic feedback'),
+            el('p', 'muted',
+                feedback || 'No review feedback available.')
+        );
+
+        root.append(card);
+    }
+}
+
+function evidencePanel() {
+    const m = latestResearch();
+    const t = m?.trace || {};
+    const sources = m?.sources || [];
+    const tools = traceField(t, 'tools_executed', 'toolsExecuted') || [];
+    const retries = traceField(t, 'retries', 'retry_count') ?? 0;
+    const approved = traceField(t, 'critic_approved', 'approved');
+    const feedback = traceField(t, 'critic_feedback', 'feedback');
+
+    $('source-count').textContent = m ? sources.length : '—';
+    $('tool-count').textContent = m ? tools.length : '—';
+    $('review-count').textContent = m ? retries : '—';
+
+    const badge = $('critic-status');
+
+    badge.className = 'badge ' +
+        (!m ? 'neutral' : approved === true ? 'good' : 'bad');
+
+    badge.textContent = !m
+        ? 'Awaiting research'
+        : approved === true
+            ? '✓ Approved'
+            : 'Review not approved';
+
+    $('critic-feedback').textContent =
+        feedback || 'Run a research question to see the agent’s review.';
+
+    renderEvidenceDetails();
+}
+
+document.querySelectorAll('.metric-card').forEach(button => {
+    button.addEventListener('click', () => {
+        selectEvidenceTab(button.dataset.panel);
+    });
+});
+function render(){renderHistory();const c=current();$('conversation-title').textContent=c&&c.messages.length?c.title:'Research Assistant';$('messages').replaceChildren();if(!c||!c.messages.length)welcome();else c.messages.forEach(message);evidencePanel();$('chat-scroll').scrollTop=$('chat-scroll').scrollHeight}async function send(){if(busy)return;const question=q.value.trim();if(!question)return;if(!current())create();const c=current(),id=c.id;c.messages.push({role:'user',text:question});if(c.title==='New research session')c.title=question.slice(0,54);q.value='';busy=true;$('send').disabled=true;save();render();const loader=el('div','loading','✦ PharmaGraph AI is planning, retrieving evidence and reviewing the answer…');$('messages').append(loader);$('chat-scroll').scrollTop=$('chat-scroll').scrollHeight;try{const response=await fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question})});const data=await response.json();if(!response.ok)throw Error(typeof data.detail==='string'?data.detail:'Request failed');const target=chats.find(c=>c.id===id);target?.messages.push({role:'assistant',text:data.answer||'No answer was returned.',sources:data.sources||[],trace:data.agent_trace||data.trace||null})}catch(e){const target=chats.find(c=>c.id===id);target?.messages.push({role:'assistant',text:'The research request could not be completed: '+e.message,sources:[],trace:null})}finally{busy=false;$('send').disabled=false;save();render();q.focus()}}$('composer').addEventListener('submit',e=>{e.preventDefault();send()});q.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});q.addEventListener('input',()=>{q.style.height='27px';q.style.height=Math.min(q.scrollHeight,130)+'px'});$('new-chat').addEventListener('click',create);$('toggle-right').addEventListener('click',()=>{$('insights').classList.toggle('visible')});if(!active)create();else render();
 
 
 // Evidence citation navigation
@@ -22,6 +197,8 @@ document.addEventListener('click', function(event) {
     event.preventDefault();
 
     const id = link.getAttribute('href').slice(1);
+    selectEvidenceTab('sources');
+
     const target = document.getElementById(id);
 
     if (!target) return;

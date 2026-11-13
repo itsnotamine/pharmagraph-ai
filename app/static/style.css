@@ -33,3 +33,112 @@
     box-shadow: 0 0 0 3px rgba(43,183,156,0.15);
 }
 
+
+/* Interactive Evidence Center */
+
+.metric-card {
+    border: 1px solid transparent;
+    background: #f1f8f5;
+    border-radius: 11px;
+    text-align: center;
+    padding: 13px 4px;
+    transition: all .2s ease;
+    cursor: pointer;
+    color: inherit;
+}
+
+.metric-card strong {
+    display: block;
+    color: #216c64;
+    font-size: 20px;
+}
+
+.metric-card span {
+    font-size: 10px;
+    color: #819c96;
+}
+
+.metric-card:hover {
+    background: #e2f3ee;
+    border-color: #b8ded4;
+}
+
+.metric-card.active {
+    background: #e1f3ed;
+    border-color: #5caaa0;
+    box-shadow: 0 0 0 2px rgba(61,156,150,.09);
+}
+
+.metric-card:focus-visible {
+    outline: 2px solid #216c64;
+    outline-offset: 2px;
+}
+
+.interactive-details {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-panel {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    margin-top: 15px;
+    padding-right: 3px;
+}
+
+.tool-card,
+.review-detail-card {
+    background: #fbfdfc;
+    border: 1px solid #e0eae8;
+    border-radius: 10px;
+    padding: 13px;
+    margin-bottom: 10px;
+}
+
+.tool-card strong,
+.review-detail-card strong {
+    display: block;
+    color: #245d5a;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+}
+
+.tool-card p,
+.review-detail-card p {
+    margin: 8px 0 12px;
+}
+
+.review-success {
+    color: #237d53;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.review-warning {
+    color: #b45143;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+@media (max-width: 950px) {
+    .insights.visible {
+        max-height: calc(100dvh - 106px);
+    }
+}
+
+/* Larger Syntax logo */
+.company img {
+    width: 200px;
+    height: 58px;
+    object-fit: contain;
+}
+
+@media (max-width: 680px) {
+    .company img {
+        width: 150px;
+        height: 48px;
+    }
+}
