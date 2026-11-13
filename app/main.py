@@ -117,8 +117,16 @@ def health():
 
 
 @app.post("/ask")
-def ask(payload: AskRequest, user: str = Depends(require_admin)):
+def ask(payload: AskRequest, request: Request):
+    user = request.session.get("user")
+
     if payload.conversation_id:
+        if user != ADMIN_EMAIL:
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication required",
+            )
+
         conversation = get_conversation(user, payload.conversation_id)
 
         if conversation is None:
@@ -128,8 +136,12 @@ def ask(payload: AskRequest, user: str = Depends(require_admin)):
             )
 
         conversation_id = payload.conversation_id
-    else:
+
+    elif user == ADMIN_EMAIL:
         conversation_id = create_conversation(user)
+
+    else:
+        conversation_id = None
 
     try:
         result = graph.invoke(
@@ -180,24 +192,25 @@ def ask(payload: AskRequest, user: str = Depends(require_admin)):
             ),
         }
 
-        add_message(
-            user_email=user,
-            conversation_id=conversation_id,
-            role="user",
-            content=payload.question,
-        )
+        if conversation_id is not None:
+            add_message(
+                user_email=user,
+                conversation_id=conversation_id,
+                role="user",
+                content=payload.question,
+            )
 
-        add_message(
-            user_email=user,
-            conversation_id=conversation_id,
-            role="assistant",
-            content=response_data["answer"],
-            metadata={
-                "sources": response_data["sources"],
-                "trace": response_data["agent_trace"],
-                "disclaimer": response_data["disclaimer"],
-            },
-        )
+            add_message(
+                user_email=user,
+                conversation_id=conversation_id,
+                role="assistant",
+                content=response_data["answer"],
+                metadata={
+                    "sources": response_data["sources"],
+                    "trace": response_data["agent_trace"],
+                    "disclaimer": response_data["disclaimer"],
+                },
+            )
 
         response_data["conversation_id"] = conversation_id
         return response_data
