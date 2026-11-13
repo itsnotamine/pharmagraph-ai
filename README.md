@@ -182,6 +182,17 @@ Configure these variables in your local .env file:
 
 Never commit real credentials, password hashes, session secrets, or API keys.
 
+
+### Administrator Setup
+
+Before running the application, copy `.env.example` to `.env` and configure your LLM credentials, `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, and `SESSION_SECRET`.
+
+Generate a password hash using PBKDF2-HMAC-SHA256 with 600,000 iterations and a random 16-byte salt. Store it as `salt_hex:hash_hex`. Generate a random session secret using `secrets.token_urlsafe(48)`.
+
+For local execution, set `DATABASE_PATH=data/pharmagraph.db`. For Docker, use `DATABASE_PATH=/app/data/pharmagraph.db` and mount a persistent volume at `/app/data`.
+
+Never commit `.env` or share credentials.
+
 ### Security Considerations
 
 This authentication implementation is intended for local demonstration. Production deployment requires HTTPS, login rate limiting, CSRF protection, and additional security hardening.
@@ -252,12 +263,20 @@ Build the Docker image:
 docker build -t pharmagraph-ai .
 ```
 
+Create a persistent Docker volume:
+
+```bash
+docker volume create pharmagraph_data
+```
+
 Start the container:
 
 ```bash
 docker run --rm \
   --name pharmagraph-ai \
-  -p 8000:8000 \
+  -p 127.0.0.1:8000:8000 \
+  -v pharmagraph_data:/app/data \
+  -e DATABASE_PATH=/app/data/pharmagraph.db \
   --env-file .env \
   pharmagraph-ai
 ```
@@ -272,10 +291,18 @@ Open:
 
 ### POST /ask
 
-Example request:
+The `/ask` endpoint requires administrator authentication. First, log in using your configured `ADMIN_EMAIL` and password:
 
 ```bash
-curl -X POST http://localhost:8000/ask \
+curl -c cookies.txt -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@pharmagraph.local","password":"YOUR_ADMIN_PASSWORD"}'
+```
+
+Replace the email and password with your own administrator credentials. Then reuse the session cookie for the research request:
+
+```bash
+curl -b cookies.txt -X POST http://localhost:8000/ask \
   -H "Content-Type: application/json" \
   -d '{"question":"Is metformin contraindicated at an eGFR of 25?"}'
 ```
@@ -581,7 +608,9 @@ Start the container:
 ```bash
 docker run --rm \
   --name pharmagraph-ai \
-  -p 8000:8000 \
+  -p 127.0.0.1:8000:8000 \
+  -v pharmagraph_data:/app/data \
+  -e DATABASE_PATH=/app/data/pharmagraph.db \
   --env-file .env \
   pharmagraph-ai
 ```
@@ -599,7 +628,7 @@ Open:
 Example request:
 
 ```bash
-curl -X POST http://localhost:8000/ask \
+curl -b cookies.txt -X POST http://localhost:8000/ask \
   -H "Content-Type: application/json" \
   -d '{"question":"Is metformin contraindicated at an eGFR of 25?"}'
 ```
