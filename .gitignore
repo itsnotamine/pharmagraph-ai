@@ -1,0 +1,27 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+
+# Local benchmarks
+tests/benchmark_results.json
+
+# Backup files
+*.bak
+*.backup
+*_backup.py
+*_backup_*.py
+*_before_ui_*.py
+requirements.txt.backup
+
+# Local editor files
+.vscode/
+.idea/
+.pytest_cache/
+
+# JavaScript backup files
+*.before_*
+*.syntax_backup
