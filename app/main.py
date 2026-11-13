@@ -1,3 +1,4 @@
+import secrets
 from pathlib import Path
 import re
 from fastapi import FastAPI, HTTPException, Request, Depends
@@ -42,7 +43,7 @@ app.include_router(conversations_router)
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key=os.environ["SESSION_SECRET"],
+    secret_key=os.getenv("SESSION_SECRET") or secrets.token_urlsafe(48),
     session_cookie="pharmagraph_session",
     max_age=60 * 60 * 8,
     same_site="lax",

@@ -4,8 +4,8 @@ import os
 
 from fastapi import HTTPException, Request
 
-ADMIN_EMAIL = os.environ["ADMIN_EMAIL"].strip().lower()
-ADMIN_PASSWORD_HASH = os.environ["ADMIN_PASSWORD_HASH"]
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@pharmagraph.local").strip().lower()
+ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH", "")
 
 
 def verify_password(password: str) -> bool:
