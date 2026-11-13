@@ -25,3 +25,4 @@ requirements.txt.backup
 # JavaScript backup files
 *.before_*
 *.syntax_backup
+tests/validation_results.json

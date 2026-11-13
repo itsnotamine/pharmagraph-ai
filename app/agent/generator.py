@@ -24,6 +24,26 @@ def generator_node(state: dict) -> dict:
         for item in tool_results
     )
 
+    retry_count = state.get("retry_count", 0)
+    critic_feedback = state.get("critic_feedback", "")
+
+    revision_instructions = ""
+
+    if retry_count > 0 and critic_feedback:
+        revision_instructions = (
+            "\n\nIMPORTANT — PREVIOUS ANSWER REJECTED BY CRITIC:\n"
+            f"{critic_feedback}\n\n"
+            "You MUST correct every issue identified above. "
+            "Do not repeat the previous mistakes. "
+            "Use only the supplied evidence. "
+            "If a requested correction is not supported by the evidence, "
+            "state the limitation instead of inventing information. "
+            "Pay special attention to formulation-specific contraindications, "
+            "clinical trial populations, numerical values, "
+            "table formatting, and distinctions between warnings "
+            "and formal contraindications."
+        )
+
     response = client.chat.completions.create(
         model=MODEL,
         temperature=0,
@@ -49,6 +69,7 @@ def generator_node(state: dict) -> dict:
                     f"Evidence:\n{context}\n\n"
                     f"Tool findings:\n{tool_summary}\n\n"
                     "Produce a clear, evidence-based answer."
+                    f"{revision_instructions}"
                 ),
             },
         ],
