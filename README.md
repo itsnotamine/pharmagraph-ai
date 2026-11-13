@@ -152,7 +152,7 @@ The conversation history remains available after page refresh, logout, login, an
 | POST | /conversations | Create a conversation |
 | GET | /conversations/{id} | Retrieve conversation history |
 | DELETE | /conversations/{id} | Delete a conversation |
-| POST | /ask | Execute research and save the response |
+| POST | /ask | Public research endpoint; authenticated requests can save conversation history |
 
 ### Persistent Docker Storage
 
@@ -185,7 +185,7 @@ Never commit real credentials, password hashes, session secrets, or API keys.
 
 ### Administrator Setup
 
-Before running the application, copy `.env.example` to `.env` and configure your LLM credentials, `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, and `SESSION_SECRET`.
+Before running the application, copy `.env.example` to `.env` and configure your LLM credentials. Administrator settings (`ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, and `SESSION_SECRET`) are optional and only needed for authenticated access to conversation history. Without an administrator password hash, administrator login is unavailable.
 
 Generate a password hash using PBKDF2-HMAC-SHA256 with 600,000 iterations and a random 16-byte salt. Store it as `salt_hex:hash_hex`. Generate a random session secret using `secrets.token_urlsafe(48)`.
 
@@ -291,7 +291,7 @@ Open:
 
 ### POST /ask
 
-The `/ask` endpoint requires administrator authentication. First, log in using your configured `ADMIN_EMAIL` and password:
+The `/ask` endpoint is public and does not require administrator authentication. For authenticated access to saved conversations, log in using your configured `ADMIN_EMAIL` and password:
 
 ```bash
 curl -c cookies.txt -X POST http://localhost:8000/auth/login \
@@ -299,10 +299,10 @@ curl -c cookies.txt -X POST http://localhost:8000/auth/login \
   -d '{"email":"admin@pharmagraph.local","password":"YOUR_ADMIN_PASSWORD"}'
 ```
 
-Replace the email and password with your own administrator credentials. Then reuse the session cookie for the research request:
+Replace the email and password with your own administrator credentials. Authentication is optional for the following research request:
 
 ```bash
-curl -b cookies.txt -X POST http://localhost:8000/ask \
+curl -X POST http://localhost:8000/ask \
   -H "Content-Type: application/json" \
   -d '{"question":"Is metformin contraindicated at an eGFR of 25?"}'
 ```
@@ -618,37 +618,6 @@ docker run --rm \
 Open:
 
 `http://localhost:8000`
-
----
-
-## 9. API Usage
-
-### POST /ask
-
-Example request:
-
-```bash
-curl -b cookies.txt -X POST http://localhost:8000/ask \
-  -H "Content-Type: application/json" \
-  -d '{"question":"Is metformin contraindicated at an eGFR of 25?"}'
-```
-
-The API returns:
-
-- `question`: Original research question
-- `answer`: Generated evidence-grounded response
-- `sources`: Supporting pharmaceutical evidence
-- `agent_trace`: Agent execution information
-- `disclaimer`: Medical safety disclaimer
-
-The agent trace includes:
-
-- Research plan
-- Search queries
-- Executed tools
-- Critic approval status
-- Critic feedback
-- Retry count
 
 ---
 
