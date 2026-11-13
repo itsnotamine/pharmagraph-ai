@@ -26,3 +26,19 @@ requirements.txt.backup
 *.before_*
 *.syntax_backup
 tests/validation_results.json
+
+# Persistent database
+*.db
+*.db-shm
+*.db-wal
+app/data/
+data/
+
+# Local credentials and generated secrets
+*.pem
+*.key
+*.sqlite
+*.sqlite3
+
+# Local setup script
+setup_admin.py

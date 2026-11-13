@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | PharmaGraph AI</title>
+    <link rel="stylesheet" href="/static/login.css">
+</head>
+
+<body>
+    <main class="login-container">
+
+        <section class="login-card">
+
+            <div class="brand">
+                <img src="/static/syntax-logo.jpeg" alt="Syntax">
+            </div>
+
+            <div class="login-header">
+                <span class="badge">SECURE RESEARCH WORKSPACE</span>
+
+                <h1 id="welcome-title">Welcome back<br><span>Amine Benjelloun</span></h1>
+
+                <p>
+                    Sign in to access PharmaGraph AI,
+                    your pharmaceutical research assistant.
+                </p>
+            </div>
+
+            <form id="login-form">
+
+                <label for="email">Email address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    autocomplete="username"
+                    required
+                >
+
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <p id="login-error" class="error" role="alert"></p>
+
+                <button type="submit" id="login-button">
+                    Sign In →
+                </button>
+
+            </form>
+
+
+
+        </section>
+
+
+
+    </main>
+
+    <script src="/static/login.js"></script>
+</body>
+</html>

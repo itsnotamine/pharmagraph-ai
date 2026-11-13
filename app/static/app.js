@@ -1,4 +1,125 @@
-const KEY='pharmagraph_syntax_v2';let chats=readChats(),active=chats[0]?.id||null,busy=false;const $=id=>document.getElementById(id);const q=$('question');function readChats(){try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v:[]}catch{return []}}function save(){try{localStorage.setItem(KEY,JSON.stringify(chats))}catch(e){console.warn('History storage unavailable',e)}}function current(){return chats.find(c=>c.id===active)}function create(){if(busy)return;const c={id:((globalThis.crypto && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)),title:'New research session',messages:[],created:Date.now()};chats.unshift(c);active=c.id;save();render();q.focus()}function choose(id){if(busy)return;active=id;render()}function remove(id){if(busy)return;chats=chats.filter(c=>c.id!==id);if(active===id)active=chats[0]?.id||null;save();render()}function el(tag,cls,txt){const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n}function renderHistory(){const root=$('history');root.replaceChildren();for(const c of chats){const b=el('button','history-item'+(c.id===active?' selected':''));const ico=el('span','', '◷'),title=el('span','history-title',c.title),del=el('button','history-delete','×');del.title='Delete chat';del.addEventListener('click',e=>{e.stopPropagation();if(confirm('Delete this conversation?'))remove(c.id)});b.append(ico,title,del);b.addEventListener('click',()=>choose(c.id));root.append(b)}}function md(text){
+
+const KEY = 'pharmagraph_syntax_v2';
+let chats = [];
+let active = null;
+let busy = false;
+
+const $ = id => document.getElementById(id);
+const q = $('question');
+
+function current() {
+    return chats.find(c => c.id === active);
+}
+
+function normalizeConversation(data) {
+    return {
+        id: data.id,
+        title: data.title,
+        created: data.created_at,
+        messages: (data.messages || []).map(m => ({
+            role: m.role,
+            text: m.content,
+            sources: m.metadata?.sources || [],
+            trace: m.metadata?.trace || null
+        }))
+    };
+}
+
+async function api(path, options = {}) {
+    const response = await fetch(path, {
+        credentials: 'same-origin',
+        ...options
+    });
+
+    if (response.status === 401) {
+        window.location.replace('/login');
+        throw new Error('Authentication required');
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.detail || 'Request failed');
+    }
+
+    return data;
+}
+
+async function loadHistory() {
+    try {
+        const data = await api('/conversations');
+
+        chats = (await Promise.all(
+            data.conversations.map(async item => {
+                const details = await api('/conversations/' + item.id);
+                return normalizeConversation(details);
+            })
+        ));
+
+        active = chats[0]?.id || null;
+        render();
+    } catch (error) {
+        console.error('Unable to load conversation history:', error);
+    }
+}
+
+async function create() {
+    if (busy) return;
+
+    try {
+        const data = await api('/conversations', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title: 'New conversation'})
+        });
+
+        const conversation = {
+            id: data.id,
+            title: data.title,
+            messages: [],
+            created: Date.now()
+        };
+
+        chats.unshift(conversation);
+        active = conversation.id;
+
+        render();
+        q.focus();
+
+        return conversation;
+    } catch (error) {
+        alert('Unable to create conversation: ' + error.message);
+        return null;
+    }
+}
+
+function choose(id) {
+    if (busy) return;
+    active = id;
+    render();
+}
+
+async function remove(id) {
+    if (busy) return;
+
+    try {
+        await api('/conversations/' + id, {
+            method: 'DELETE'
+        });
+
+        chats = chats.filter(c => c.id !== id);
+
+        if (active === id) {
+            active = chats[0]?.id || null;
+        }
+
+        render();
+    } catch (error) {
+        alert('Unable to delete conversation: ' + error.message);
+    }
+}
+
+function el(tag,cls,txt){const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n}function renderHistory(){const root=$('history');root.replaceChildren();for(const c of chats){const b=el('button','history-item'+(c.id===active?' selected':''));const ico=el('span','', '◷'),title=el('span','history-title',c.title),del=el('button','history-delete','×');del.title='Delete chat';del.addEventListener('click',e=>{e.stopPropagation();if(confirm('Delete this conversation?'))remove(c.id)});b.append(ico,title,del);b.addEventListener('click',()=>choose(c.id));root.append(b)}}function md(text){
     if (!window.marked || !window.DOMPurify) return null;
 
     // Normalize escaped line breaks returned by the backend.
@@ -186,7 +307,96 @@ document.querySelectorAll('.metric-card').forEach(button => {
         selectEvidenceTab(button.dataset.panel);
     });
 });
-function render(){renderHistory();const c=current();$('conversation-title').textContent=c&&c.messages.length?c.title:'Research Assistant';$('messages').replaceChildren();if(!c||!c.messages.length)welcome();else c.messages.forEach(message);evidencePanel();$('chat-scroll').scrollTop=$('chat-scroll').scrollHeight}async function send(){if(busy)return;const question=q.value.trim();if(!question)return;if(!current())create();const c=current(),id=c.id;c.messages.push({role:'user',text:question});if(c.title==='New research session')c.title=question.slice(0,54);q.value='';busy=true;$('send').disabled=true;save();render();const loader=el('div','loading','✦ PharmaGraph AI is planning, retrieving evidence and reviewing the answer…');$('messages').append(loader);$('chat-scroll').scrollTop=$('chat-scroll').scrollHeight;try{const response=await fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question})});const data=await response.json();if(!response.ok)throw Error(typeof data.detail==='string'?data.detail:'Request failed');const target=chats.find(c=>c.id===id);target?.messages.push({role:'assistant',text:data.answer||'No answer was returned.',sources:data.sources||[],trace:data.agent_trace||data.trace||null})}catch(e){const target=chats.find(c=>c.id===id);target?.messages.push({role:'assistant',text:'The research request could not be completed: '+e.message,sources:[],trace:null})}finally{busy=false;$('send').disabled=false;save();render();q.focus()}}$('composer').addEventListener('submit',e=>{e.preventDefault();send()});q.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});q.addEventListener('input',()=>{q.style.height='27px';q.style.height=Math.min(q.scrollHeight,130)+'px'});$('new-chat').addEventListener('click',create);$('toggle-right').addEventListener('click',()=>{$('insights').classList.toggle('visible')});if(!active)create();else render();
+function render(){renderHistory();const c=current();$('conversation-title').textContent=c&&c.messages.length?c.title:'Research Assistant';$('messages').replaceChildren();if(!c||!c.messages.length)welcome();else c.messages.forEach(message);evidencePanel();$('chat-scroll').scrollTop=$('chat-scroll').scrollHeight}
+async function send() {
+    if (busy) return;
+
+    const question = q.value.trim();
+    if (!question) return;
+
+    let conversation = current();
+
+    if (!conversation) {
+        conversation = await create();
+        if (!conversation) return;
+    }
+
+    const id = conversation.id;
+
+    conversation.messages.push({
+        role: 'user',
+        text: question
+    });
+
+    if (conversation.title === 'New conversation') {
+        conversation.title = question.slice(0, 70);
+    }
+
+    q.value = '';
+    busy = true;
+    $('send').disabled = true;
+
+    render();
+
+    const loader = el(
+        'div',
+        'loading',
+        '✦ PharmaGraph AI is planning, retrieving evidence and reviewing the answer…'
+    );
+
+    $('messages').append(loader);
+
+    try {
+        const data = await api('/ask', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                question,
+                conversation_id: id
+            })
+        });
+
+        const target = chats.find(c => c.id === id);
+
+        target?.messages.push({
+            role: 'assistant',
+            text: data.answer || 'No answer was returned.',
+            sources: data.sources || [],
+            trace: data.agent_trace || null
+        });
+
+        await refreshHistoryList();
+
+    } catch (error) {
+        const target = chats.find(c => c.id === id);
+
+        target?.messages.push({
+            role: 'assistant',
+            text: 'The research request could not be completed: ' + error.message,
+            sources: [],
+            trace: null
+        });
+    } finally {
+        busy = false;
+        $('send').disabled = false;
+        render();
+        q.focus();
+    }
+}
+
+async function refreshHistoryList() {
+    const data = await api('/conversations');
+
+    const order = new Map(
+        data.conversations.map((item, index) => [item.id, index])
+    );
+
+    chats.sort(
+        (a, b) => (order.get(a.id) ?? 9999) - (order.get(b.id) ?? 9999)
+    );
+}
+
+$('composer').addEventListener('submit',e=>{e.preventDefault();send()});q.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});q.addEventListener('input',()=>{q.style.height='27px';q.style.height=Math.min(q.scrollHeight,130)+'px'});$('new-chat').addEventListener('click',create);$('toggle-right').addEventListener('click',()=>{$('insights').classList.toggle('visible')});loadHistory();
 
 
 // Evidence citation navigation
@@ -216,4 +426,18 @@ document.addEventListener('click', function(event) {
     setTimeout(() => {
         target.classList.remove('evidence-highlight');
     }, 2500);
+});
+
+/* Administrator logout */
+document.getElementById("logout-button")?.addEventListener("click", async () => {
+    const response = await fetch("/auth/logout", {
+        method: "POST",
+        credentials: "same-origin"
+    });
+
+    if (response.ok) {
+        window.location.replace("/login");
+    } else {
+        alert("Unable to sign out. Please try again.");
+    }
 });

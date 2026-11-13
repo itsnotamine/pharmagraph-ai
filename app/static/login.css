@@ -1,0 +1,162 @@
+:root {
+    --forest: #143e43;
+    --teal: #278b7d;
+    --background: #f4f9f7;
+    --border: #dfeae7;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Inter, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #edf8f4, #ffffff);
+    color: #1b313b;
+}
+
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 38px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    box-shadow: 0 20px 70px rgba(20, 62, 67, 0.09);
+}
+
+.brand {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.brand img {
+    width: 260px;
+    max-width: 100%;
+    height: auto;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.badge {
+    display: inline-block;
+    background: #e8f6f1;
+    color: #247c70;
+    padding: 8px 12px;
+    border-radius: 30px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.login-header h1 {
+    margin: 20px 0 10px;
+    font-size: 29px;
+}
+
+.login-header p {
+    color: #819496;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 9px;
+}
+
+input {
+    padding: 14px;
+    margin-bottom: 21px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    outline: none;
+}
+
+input:focus {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(39, 139, 125, 0.1);
+}
+
+button {
+    background: var(--forest);
+    color: white;
+    padding: 15px;
+    border: none;
+    border-radius: 11px;
+    font-size: 13px;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1c5558;
+}
+
+button:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+.error {
+    color: #b45143;
+    font-size: 12px;
+    min-height: 15px;
+}
+
+.login-footer {
+    text-align: center;
+    margin-top: 28px;
+    border-top: 1px solid var(--border);
+    padding-top: 17px;
+}
+
+.login-footer p {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.login-footer span {
+    font-size: 10px;
+    color: #90a3a3;
+}
+
+.copyright {
+    margin-top: 24px;
+    font-size: 11px;
+    color: #90a3a3;
+}
+
+/* Two-line personalized welcome */
+#welcome-title {
+    line-height: 1.5;
+    text-align: center;
+}
+
+#welcome-title span {
+    display: inline-block;
+    color: #278b7d;
+    font-size: 24px;
+    font-weight: 700;
+}
