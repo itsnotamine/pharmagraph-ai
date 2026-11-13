@@ -119,6 +119,75 @@ Generated responses reference retrieved evidence passages to support factual cla
 
 ---
 
+
+## Authentication and Persistent Conversation History
+
+PharmaGraph AI provides administrator authentication and persistent conversation history.
+
+### Administrator Authentication
+
+- Secure password verification using PBKDF2-HMAC-SHA256.
+- Signed session cookies with an eight-hour expiration.
+- Protected research and conversation API endpoints.
+- Administrator login and logout.
+- Session-based access control.
+
+### SQLite Conversation History
+
+Research conversations are stored in a persistent SQLite database.
+
+Each conversation preserves:
+- User questions and generated answers.
+- Scientific citations and supporting evidence.
+- Executed pharmaceutical tools.
+- Adaptive Critic feedback and retry information.
+
+The conversation history remains available after page refresh, logout, login, and Docker container recreation.
+
+### Conversation API
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | /conversations | List saved conversations |
+| POST | /conversations | Create a conversation |
+| GET | /conversations/{id} | Retrieve conversation history |
+| DELETE | /conversations/{id} | Delete a conversation |
+| POST | /ask | Execute research and save the response |
+
+### Persistent Docker Storage
+
+Create a named Docker volume:
+
+    docker volume create pharmagraph_data
+
+Build the application:
+
+    docker build -t agent .
+
+Start the container:
+
+    docker run -d --rm --name pharmagraph -p 127.0.0.1:8000:8000 -v pharmagraph_data:/app/data -e DATABASE_PATH=/app/data/pharmagraph.db --env-file .env agent
+
+The database is stored at /app/data/pharmagraph.db inside the container.
+
+### Authentication Environment Variables
+
+Configure these variables in your local .env file:
+
+    ADMIN_EMAIL=admin@pharmagraph.local
+    ADMIN_PASSWORD_HASH=<generated_password_hash>
+    SESSION_SECRET=<random_session_secret>
+    SESSION_HTTPS_ONLY=false
+    DATABASE_PATH=/app/data/pharmagraph.db
+
+Never commit real credentials, password hashes, session secrets, or API keys.
+
+### Security Considerations
+
+This authentication implementation is intended for local demonstration. Production deployment requires HTTPS, login rate limiting, CSRF protection, and additional security hardening.
+
+---
+
 ## 7. Installation
 
 ### Requirements
